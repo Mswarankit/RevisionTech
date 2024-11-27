@@ -172,3 +172,311 @@ func main() {
 }
 
 ```
+
+__CRUD + PATCH Using Movies__
+---
+
+**Client Side**
+
+```
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+)
+
+type Movie struct {
+	ID          int     `json:"id"`
+	Title       string  `json:"title"`
+	Director    string  `json:"director"`
+	ReleaseYear int     `json:"release_year"`
+	Rating      float64 `json:"rating"`
+}
+
+func createMovie(movie Movie) {
+	jsonData, _ := json.Marshal(movie)
+	resp, err := http.Post("http://localhost:8080/movies", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		fmt.Printf("Error Creating movie: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("Created movie: %s\n", string(body))
+}
+
+func getMovie(id int) {
+	resp, err := http.Get(fmt.Sprintf("http://localhost:8080/movies/%d", id))
+	if err != nil {
+		fmt.Printf("Error getting movie: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("Movie details: %s\n", string(body))
+}
+
+func updateMovie(id int, movie Movie) {
+	jsonData, _ := json.Marshal(movie)
+	req, _ := http.NewRequest(http.MethodPut, fmt.Sprintf("http://localhost:8080/movies/%d", id), bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("Error updating movie: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("Updated movie: %s\n", string(body))
+}
+
+func patchMovie(id int, updates map[string]interface{}) {
+	jsonData, _ := json.Marshal(updates)
+	req, _ := http.NewRequest(http.MethodPatch, fmt.Sprintf("http://localhost:8080/movies/%d", id), bytes.NewBuffer(jsonData))
+	req.Header.Set("Content-Type", "application/json")
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("Error patching movie: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	fmt.Printf("Updated movie: %s\n", string(body))
+}
+
+func deleteMovie(id int) {
+	req, _ := http.NewRequest(http.MethodDelete,
+		fmt.Sprintf("http://localhost:8080/movies/%d", id),
+		nil)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Printf("Error deleting movie: %v\n", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	fmt.Printf("Movie deleted. Status: %s\n", resp.Status)
+}
+
+func main() {
+	movie := Movie{
+		Title:       "3 Idiots",
+		Director:    "Rajkumar Hirani",
+		ReleaseYear: 2009,
+		Rating:      8.0,
+	}
+	createMovie(movie)
+	getMovie(1)
+	movie.Rating = 8.2
+	updateMovie(1, movie)
+
+	updates := map[string]interface{}{
+		"rating": 8.4,
+	}
+	patchMovie(1, updates)
+
+	deleteMovie(1)
+}
+
+```
+
+**Server Side**
+
+```
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+)
+
+type Movie struct {
+	ID          int     `json:"id"`
+	Title       string  `json:"title"`
+	Director    string  `json:"director"`
+	ReleaseYear int     `json:"release_year"`
+	Rating      float64 `json:"rating"`
+}
+
+var (
+	movies = make(map[int]Movie)
+	mu     sync.RWMutex
+	nextID = 1
+)
+
+func createMovieHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var movie Movie
+	if err := json.NewDecoder(r.Body).Decode(&movie); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	mu.Lock()
+	movie.ID = nextID
+	movies[nextID] = movie
+	nextID++
+	mu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(movie)
+}
+
+func getMovieHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	idStr := strings.TrimPrefix(r.URL.Path, "/movies/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid movie ID", http.StatusBadRequest)
+		return
+	}
+	mu.RLock()
+	movie, exists := movies[id]
+	mu.RUnlock()
+
+	if !exists {
+		http.Error(w, "Movie not found", http.StatusBadRequest)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(movie)
+
+}
+
+func updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/movies/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid movie ID", http.StatusBadRequest)
+		return
+	}
+	var movie Movie
+
+	if err := json.NewDecoder(r.Body).Decode(&movie); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	mu.Lock()
+	movie.ID = id
+	movies[id] = movie
+	mu.Unlock()
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(movie)
+}
+
+func patchMovieHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPatch {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/movies/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid movie ID", http.StatusBadRequest)
+		return
+	}
+
+	mu.Lock()
+	movie, exists := movies[id]
+	if !exists {
+		mu.Unlock()
+		http.Error(w, "Movie not found", http.StatusNotFound)
+		return
+	}
+
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		mu.Unlock()
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for key, value := range updates {
+		switch key {
+		case "title":
+			movie.Title = value.(string)
+		case "director":
+			movie.Director = value.(string)
+		case "release_year":
+			movie.ReleaseYear = int(value.(float64))
+		case "rating":
+			movie.Rating = value.(float64)
+		}
+	}
+	movies[id] = movie
+	mu.Unlock()
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(movie)
+}
+
+func deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	idStr := strings.TrimPrefix(r.URL.Path, "/movies/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid movie ID", http.StatusBadRequest)
+		return
+	}
+
+	mu.Lock()
+	delete(movies, id)
+	mu.Unlock()
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func main() {
+	http.HandleFunc("/movies", createMovieHandler)
+	http.HandleFunc("/movies/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			getMovieHandler(w, r)
+		case http.MethodPut:
+			updateMovieHandler(w, r)
+		case http.MethodPatch:
+			patchMovieHandler(w, r)
+		case http.MethodDelete:
+			deleteMovieHandler(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Println(err)
+	}
+}
+
+```
+
