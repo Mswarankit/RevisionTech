@@ -41,3 +41,36 @@ There are basically two types of modules
   /*
   This is multiline comment we used in golang.
   */
+
+  `const` is a keyword, if we define anything with const it means the value cannot be changes or reassigned.
+
+  ```
+  const constant = "This values is not going to changes"
+  const a = 10
+  const b = 4.4
+  const val = True
+  ```
+
+
+ `var` is variable keyword means the value will change according to execution.
+ There are various ways we assign variables
+ ```
+ // declaration without initlization
+ var foo string
+
+ // multiple decalaration
+ var foo, bar string = "Hello" , "New thing"
+
+ var (
+    jingle string = "jingle"
+    bell string = "bell"
+ )
+ 
+ // without type specified
+ var foo = "Hello new type"
+
+ // without var declaration
+ jingle := "Jingle Bell"
+ ```
+
+ 
