@@ -575,3 +575,75 @@ func main() {
 
 
 
+## HTTP and Browsers
+
+1. Describe the structure of an HTTP request and response?
+
+	An HTTP request consistes of three main parts: the start line, headers and an optional body. The start line specifies the HTTP method (e.g., GET or POST), the resource path (e.g., /home), and the protocol versions (eg. HTTP/1.1). Next come the headers, which are key-value pairs providing additional information such as the content type (Content-Type) or the user agent (User-Agent). The body is included like in methods like POST or PUT and contains the data sent to the server (eg JSON or XML).
+
+	An HTTP response also consistes of three parts: the status line, headers, and body. The status line indicates the protocol version, the status code (eg. 200 for success or 404 for "not found"), and a status message. The headers provide metadata such as the content length (Content-Length) or encoding (Content-Encoding). The body contains the actual content, such as an HTML page or API data.
+
+2. What HTTP methods do you know, and what are they used for ?
+
+	HTTP methods define the action to be performed on the server. For example, the GET method is used to retrieve data from the server. It is safe and idempotent, meaning repeated requests do not change the servers state.
+
+	POST is used to send data to the server, such as creating a new resource. PUT is used to replace an existing resource or create one if it doesn't exists.
+	DELETE is used to delete a resource. HEAD is similar to GET but only returns headers, which is useful for checking the existence of a resource.PATCH is used for patially updating a resource.
+
+3. What are HTTP headers? Provide examples of commonly used headers?
+
+	HTTP headers are metadata sent along with requests and responses that provide information about the request or resource. They are used for specifying content, caching settings, authentication, user agents, and other parameters.
+
+	Examples of common headers:
+	
+	* `Content-Type` specifies the type of data, such as application/json.
+	* `Authorization` is used to send tokens or credentials
+	* `Cache-Control` manages caching, for example, no-cache.
+	* `User-Agent` identifies the client making the request, such as a browser.
+	* `Accept` informs the server about the types of responses the client expects.
+
+4. What is the difference between HTTP and HTTPS? How is HTTPs security ensured?
+
+	HTTP transmits data in plain text, making it vulnerable to attacks like "man-in-the-middle." HTTPS, on the other hand, encrypts data using the TLS (Transport Layer Security) protocol, protecting it during transmission.
+
+	HTTPS security is ensured through certificates issued by certification autherties (CAs). When a connection is established, the client verfies the server's certificat. Then, a secure channel is created using symmetric encryption.
+
+5. What is CORS (Cross-Origin Resource Sharing), and how can its issues be resolved?
+
+	CORS is a mechanism that allows servers to control their resources from other domains. By default, browser block cross origin requests to prevent malicious activity.
+	To allow such requests, the server must include specific headers like Access-Control-Allow-Origin, which indicates which domains have access to the resources. For example, to allow access for all domains, the server can use Access-Control-Allow-Origin: *
+
+6. How does static and dynamic web pages differ?
+
+	Static web pages fixed content as files on the server. They do not change based on user requests. An example is a simple HTML file.
+	
+	Dynamic web pages are generated on the server in real time, and their content depends on request parameters. For instance, search result pages are generated based on the user's input. Such pages often use server-side programming languages like Python and Go and connect to databases.
+
+7. What are cookies, localStorage, and sessionStorage? When should each be used?
+
+	Cookies are small piece of data sent by the server to the browser for storage.
+	They are automatically sent back with every request to the server. Cookies are usefull for authetication or session tracking.
+
+	localStorage persists data even after the browser is closed.
+	sessionStorage deletes data when the session ends (when the tab is closed.)
+	
+	localstorage and sessionstorage are client side storage methods.
+	Cookies are better for data related to the server, while localStorage and sessionStorage deletes data when the session ends (e.g., when the tab is closed.)
+
+8. What is REST, and how does it differ from SOAP?
+
+	REST (Representational State Transfer) is an architectural style that uses  the HTTP protocol to create web services. It is based on CRUD operations and the concepts of resources. REST is lightweight,easy to understand and implement.
+
+	SOAP (Simple Object Access Protocol) is a more complex protocol for web service interaction. It uses XML for data exchange and supports strict security standards and transactions. SOAP is often used in enterprise systems requiring high reliability.
+
+9. What HTTP versions do you know, and what are the key improvements in HTTP/2 and HTTP/3?
+
+	The known HTTP versions are HTTP/1.1, HTTP/2, and HTTP/3. 
+	
+	HTTP/1.1 was the standard for a long time, but its major limitation was the inability to send multiple requests simultaneously over a single connection.
+
+	HTTP/2 addresses this by enabling multiplexing, allowing multiple requests to be sent at the same time. It also uses a binary format, which speeds up data processing, and supports header compression.
+
+	HTTP/3, in contrast, is based on the QUIC protocol, which uses UDP instead of TCP. This results in faster connection establishment and lower latency, especially in unstable network conditions.
+
+
