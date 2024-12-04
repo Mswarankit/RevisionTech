@@ -22,3 +22,8 @@ __Parallelism__, on the other hand, is the simultaneous execution of multiple ta
 
 2. _Concurrency_ doesn’t guarantee that tasks will run in true parallel; they may share the same resources or take turns using them. _Parallelism_, on the other hand, ensures tasks are actively running at the same time on separate resources.
 
+###### Goroutines: 
+Goroutines are lightweight, independently scheduled functions that can be executed concurrently. They are similar to threads but are managed by Go’s runtime, making them more efficient. Goroutines enable concurrent execution in Go.
+
+###### Channels: 
+Channels are a communication mechanism in Go that allows goroutines to communicate and synchronize. They facilitate coordination between concurrent tasks, which is crucial for many concurrent programs.
