@@ -647,3 +647,4 @@ func main() {
 	HTTP/3, in contrast, is based on the QUIC protocol, which uses UDP instead of TCP. This results in faster connection establishment and lower latency, especially in unstable network conditions.
 
 
+

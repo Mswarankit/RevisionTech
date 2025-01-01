@@ -27,3 +27,57 @@ Goroutines are lightweight, independently scheduled functions that can be execut
 
 ###### Channels: 
 Channels are a communication mechanism in Go that allows goroutines to communicate and synchronize. They facilitate coordination between concurrent tasks, which is crucial for many concurrent programs.
+
+#### Concurrenty is about dealing with lots of things at once.
+#### Parellism is about doing lots of things at once.
+
+### WaitGroups
+
+A WaitGroup blocks a program and waits for a set of goroutines to finish before moving to the next steps of execution.
+
+
+
+We can use Waitgroups through the following functiions:
+Add(int): This function takes in an integer value which is essentially
+
+```
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+// Because we are going to use a method "func (wg *WaitGroup) Done()",
+// so "WaitGroup" must be passed by "pointer"
+func worker(id int, wg *sync.WaitGroup) {
+	fmt.Printf("Worker : %d -> Starting\n", id)
+
+	// Sleep to simulate an expensive task
+	time.Sleep(time.Second)
+	fmt.Printf("Worker : %d -> Done\n", id)
+
+	// Notify the "WaitGroup" that this "worker" is "done"
+	wg.Done()
+}
+
+func main() {
+
+	// This "WaitGroup" is used to wait for all the goroutines launched here to finish
+	var wg sync.WaitGroup
+
+	// Launch several goroutines and increase the "WaitGroup" "counter" for each
+	for id := 1; id <= 5; id++ {
+		wg.Add(1)
+		go worker(id, &wg)
+	}
+
+	// Block until the "WaitGroup" "counter" goes back to "0",
+	// meaning all the workers notified that they are "done"
+	wg.Wait()
+}
+```
+
+
+
